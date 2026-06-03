@@ -472,47 +472,78 @@ export default function NlpMenengahPage() {
                 </p>
               )}
 
-              {hasil.map((item) => (
-                <div key={item.rule.kode} className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs bg-cyan-400/10 text-cyan-400 border border-cyan-400/30 px-2 py-0.5">
-                      {item.kerusakan.kode}
-                    </span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">
-                      {item.kerusakan.nama}
-                    </span>
-                    <span className="text-xs text-slate-500">Aturan: {item.rule.kode}</span>
-                    {item.isPartial && (
-                      <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900/50 px-2 py-0.5">
-                        ⚠ Kemungkinan
+              {hasil.map((item) => {
+                const solusiSteps = item.kerusakan.solusi
+                  .split(/\.\s+/)
+                  .map(s => s.trim())
+                  .filter(Boolean);
+
+                return (
+                  <div key={item.rule.kode} className="border border-slate-200 dark:border-slate-800 rounded-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 border border-cyan-400/30 px-2 py-0.5 rounded-sm">
+                        {item.kerusakan.kode}
                       </span>
-                    )}
+                      <span className="text-lg font-medium text-slate-900 dark:text-white">
+                        {item.kerusakan.nama}
+                      </span>
+                      <span className="text-xs text-slate-400">Aturan: {item.rule.kode}</span>
+                      {item.isPartial && (
+                        <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900/50 px-2 py-0.5 rounded-sm">
+                          ⚠ Kemungkinan
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="px-4 py-4 space-y-5">
+                      {/* Penjelasan */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          <span className="text-xs font-medium uppercase tracking-widest text-slate-400">Penjelasan</span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                          {item.kerusakan.deskripsi}
+                        </p>
+                      </div>
+
+                      {/* Solusi */}
+                      <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                          <span className="text-xs font-medium uppercase tracking-widest text-slate-400">Langkah Perbaikan</span>
+                        </div>
+                        <ol className="space-y-2.5">
+                          {solusiSteps.map((step, i) => (
+                            <li key={i} className="flex gap-3 items-start">
+                              <span className="min-w-[22px] h-[22px] rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-600 dark:text-cyan-400 text-xs font-medium flex items-center justify-center mt-0.5">
+                                {i + 1}
+                              </span>
+                              <span className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                                {step}{!step.endsWith('.') ? '.' : ''}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider">Penjelasan</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {item.kerusakan.deskripsi}
-                  </p>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider">Solusi</p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                      {item.kerusakan.solusi}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               {onlyPartial && (
                 <div className="mt-4 space-y-3">
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                  <p className="text-xs text-cyan-600 dark:text-cyan-400">
                     Hasil di atas merupakan kemungkinan tertinggi karena gejala belum lengkap.
                   </p>
-                  <div className="border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/20 rounded-sm overflow-hidden">
-                    <div className="p-3 border-b border-amber-200 dark:border-amber-900/30">
-                      <p className="text-xs text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                  <div className="border border-cyan-400/30 dark:border-cyan-400/20 bg-cyan-50/50 dark:bg-cyan-950/20 rounded-sm overflow-hidden">
+                    <div className="p-3 border-b border-cyan-400/20 dark:border-cyan-400/15">
+                      <p className="text-xs text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
                         Rule yang cocok dengan keluhan
                       </p>
                     </div>
-                    <div className="divide-y divide-amber-200 dark:divide-amber-900/30">
+                    <div className="divide-y divide-cyan-400/15 dark:divide-cyan-400/10">
                       {matchedRules.length === 0 && (
                         <div className="p-3 text-xs text-slate-600 dark:text-slate-400">
                           Tidak ada rule yang cocok.
@@ -521,29 +552,29 @@ export default function NlpMenengahPage() {
                       {matchedRules.map((item) => (
                         <div key={item?.rule.kode} className="p-3">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs bg-amber-400/10 text-amber-700 border border-amber-300/50 px-2 py-0.5">
+                            <span className="text-xs bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 border border-cyan-400/30 px-2 py-0.5 rounded-sm">
                               {item?.rule.kode}
                             </span>
-                            <span className="text-xs text-slate-500">→</span>
+                            <span className="text-xs text-slate-400">→</span>
                             <span className="text-xs text-slate-700 dark:text-slate-300">
                               {item?.rule.kodeKerusakan}
                               {item?.kerusakan ? ` · ${item.kerusakan.nama}` : ""}
                             </span>
-                            <span className="text-xs text-slate-500">
-                              kecocokan {(((item?.score ?? 0) * 100).toFixed(0))}%
+                            <span className="text-xs text-cyan-600/70 dark:text-cyan-400/60">
+                              kecocokan {((item?.score ?? 0) * 100).toFixed(0)}%
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                             Gejala cocok: {item?.matched.join(", ")}
                           </p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {item?.allGejala.map((g) => (
                               <span
                                 key={`${item?.rule.kode}-${g.kode}`}
-                                className={`text-xs border px-2 py-1 ${
+                                className={`text-xs border px-2 py-1 rounded-sm ${
                                   g.isMatched
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
-                                    : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                                    ? "bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 border-cyan-400/30"
+                                    : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
                                 }`}
                               >
                                 {g.isMatched ? "✓" : "○"} {g.kode}{g.nama ? ` · ${g.nama}` : ""}
