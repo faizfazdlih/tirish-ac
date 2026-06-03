@@ -23,6 +23,31 @@ export interface HasilDiagnosa {
   isPartial: boolean;
 }
 
+export const gejalaBobot: Record<string, number> = {
+  // Gejala kritis (gangguan inti sistem)
+  G3: 1.4,  
+  G8: 1.4,  
+  G5: 1.3,  
+  G16: 1.3, 
+
+  // Gejala penting (indikator kuat kerusakan tertentu)
+  G4: 1.1,
+  G10: 1.1,
+  G14: 1.1,
+  G15: 1.1,
+  G12: 1.0,
+  G17: 1.0,
+  G6: 1.0,  
+
+  // Gejala menengah (gejala umum/performa)
+  G1: 0.9,  
+  G2: 0.8,  
+  G7: 0.8,  
+  G11: 0.8, 
+  G13: 0.8, 
+  G9: 0.8,  
+};
+
 export const gejalaDaftar: Gejala[] = [
   { kode: "G1",  nama: "Ruangan AC tidak dingin" },
   { kode: "G2",  nama: "Ruangan AC kurang dingin" },
@@ -39,7 +64,7 @@ export const gejalaDaftar: Gejala[] = [
   { kode: "G13", nama: "Hembusan blower indoor terhambat dan tidak merata" },
   { kode: "G14", nama: "Sirip-sirip evaporator tersumbat" },
   { kode: "G15", nama: "Sirip-sirip kondensor tersumbat" },
-  { kode: "616", nama: "Kapasitor kipas tampak gembung atau pecah" },
+  { kode: "G16", nama: "Kapasitor kipas tampak gembung atau pecah" },
   { kode: "G17", nama: "Putaran kipas outdoor lemah" },
 ];
 
@@ -154,7 +179,7 @@ export const rules: Rule[] = [
   { kode: "A9",  kodeKerusakan: "K9",  kodeGejala: ["G1", "G11", "G12"] },
   { kode: "A10", kodeKerusakan: "K10", kodeGejala: ["G2", "G13", "G14"] },
   { kode: "A11", kodeKerusakan: "K11", kodeGejala: ["G15"] },
-  { kode: "A12", kodeKerusakan: "K12", kodeGejala: ["G1", "616", "G17"] },
+  { kode: "A12", kodeKerusakan: "K12", kodeGejala: ["G1", "G16", "G17"] },
 ];
 
 export function forwardChaining(gejalaTerpilih: string[]): HasilDiagnosa[] {
@@ -177,7 +202,15 @@ export function forwardChaining(gejalaTerpilih: string[]): HasilDiagnosa[] {
       bestFullMatch = { kerusakan, rule, gejalaCocok: gejalaDetail, isPartial: false };
       break;
     } else {
-      const score = gejalaCocok.length / rule.kodeGejala.length;
+      const totalWeight = rule.kodeGejala.reduce(
+        (sum, kode) => sum + (gejalaBobot[kode] ?? 1),
+        0
+      );
+      const matchedWeight = gejalaCocok.reduce(
+        (sum, kode) => sum + (gejalaBobot[kode] ?? 1),
+        0
+      );
+      const score = totalWeight > 0 ? matchedWeight / totalWeight : 0;
       if (score > bestPartialScore) {
         bestPartialScore = score;
         bestPartial = { kerusakan, rule, gejalaCocok: gejalaDetail, isPartial: true };

@@ -60,52 +60,54 @@ export default function Home() {
                 Ratapan Oslo
               </span>
             </div>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 p-2 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors rounded-sm"
-              aria-label="Ganti mode tema"
-              title="Ganti mode tema"
-            >
-              <span className="hidden dark:inline">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              </span>
-              <span className="inline dark:hidden">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              </span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 p-2 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors rounded-sm"
+                aria-label="Ganti mode tema"
+                title="Ganti mode tema"
+              >
+                <span className="hidden dark:inline">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                </span>
+                <span className="inline dark:hidden">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-none">
             <span className="text-slate-900 dark:text-white">TIRISH</span>{" "}
@@ -113,7 +115,6 @@ export default function Home() {
           <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm max-w-md">
             Sistem pakar menganalisa kerusakan AC menggunakan metode Forward Chaining
           </p>
-
           <div className="flex items-center gap-2 mt-6">
             {(["intro", "diagnosa", "hasil"] as Step[]).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
@@ -181,8 +182,9 @@ export default function Home() {
                   key={label}
                   href={href}
                   title={`Klik untuk melihat ${label.toLowerCase()}`}
-                  className="group border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 p-4 rounded-sm text-center cursor-pointer hover:border-cyan-400/70 dark:hover:border-cyan-400/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-950"
+                  className="group block border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 p-4 rounded-sm text-center cursor-pointer hover:border-cyan-400/70 dark:hover:border-cyan-400/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-950"
                 >
+                  <div className="text-3xl font-bold text-cyan-400">{num}</div>
                   <div className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1">
                     <span>{label}</span>
                     <span className="text-cyan-400/70 group-hover:text-cyan-400 transition-colors">→</span>
@@ -194,12 +196,20 @@ export default function Home() {
               ))}
             </div>
 
-            <button
-              onClick={() => setStep("diagnosa")}
-              className="w-full bg-cyan-400 text-slate-900 font-bold py-4 text-sm tracking-[0.2em] uppercase hover:bg-cyan-300 transition-colors"
-            >
-              Mulai Diagnosa →
-            </button>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                onClick={() => setStep("diagnosa")}
+                className="w-full bg-cyan-400 text-slate-900 font-bold py-4 text-sm tracking-[0.2em] uppercase hover:bg-cyan-300 transition-colors"
+              >
+                Mulai Diagnosa →
+              </button>
+              <Link
+                href="/nlp-menengah"
+                className="w-full text-center border border-cyan-400/70 text-cyan-600 dark:text-cyan-400 font-bold py-4 text-sm tracking-[0.2em] uppercase hover:bg-cyan-400/10 transition-colors"
+              >
+                NLP →
+              </Link>
+            </div>
           </div>
         )}
 
