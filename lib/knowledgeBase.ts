@@ -23,29 +23,210 @@ export interface HasilDiagnosa {
   isPartial: boolean;
 }
 
-export const gejalaBobot: Record<string, number> = {
-  // Gejala kritis (gangguan inti sistem)
-  G3: 1.4,  
-  G8: 1.4,  
-  G5: 1.3,  
-  G16: 1.3, 
+// ─────────────────────────────────────────────
+// PARSING
+// ─────────────────────────────────────────────
 
-  // Gejala penting (indikator kuat kerusakan tertentu)
+export interface ParsedToken {
+  original: string;   // kata asli
+  normalized: string; // setelah lowercase & buang tanda baca
+  position: number;   // posisi ke-n dalam kalimat
+  isNegated: boolean; // apakah didahului kata negasi
+  isStopword: boolean;
+}
+
+export interface ParseResult {
+  tokens: ParsedToken[];
+  negatedTerms: string[];   // daftar term yang kena negasi
+  affirmedTerms: string[];  // daftar term yang tidak kena negasi
+  rawSentence: string;
+}
+
+const NEGATION_WORDS = new Set([
+  "tidak", "bukan", "belum", "tanpa", "tak", "jangan", "tiada",
+]);
+
+const STOPWORDS_SET = new Set([
+  "ac", "unit", "indoor", "outdoor", "ruangan", "pada", "yang",
+  "dari", "atau", "dan", "di", "ke", "dengan", "untuk", "tidak",
+  "kurang", "secara", "terlalu", "saat", "ini", "saya", "sudah",
+  "ada", "juga", "itu", "ini", "nya", "lagi", "bisa",
+]);
+
+export function parseText(text: string): ParseResult {
+  // 1. Normalisasi dasar
+  const cleaned = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const rawWords = cleaned.split(" ").filter(Boolean);
+  const tokens: ParsedToken[] = [];
+
+  let negationActive = false;
+  let negationWindow = 0; // negasi berlaku max 3 kata ke depan
+
+  for (let i = 0; i < rawWords.length; i++) {
+    const word = rawWords[i];
+    const isNegWord = NEGATION_WORDS.has(word);
+    const isStop = STOPWORDS_SET.has(word);
+
+    if (isNegWord) {
+      negationActive = true;
+      negationWindow = 3;
+      tokens.push({
+        original: word,
+        normalized: word,
+        position: i,
+        isNegated: false,
+        isStopword: true,
+      });
+      continue;
+    }
+
+    if (negationActive && negationWindow > 0) {
+      negationWindow--;
+      if (negationWindow === 0) negationActive = false;
+    }
+
+    tokens.push({
+      original: word,
+      normalized: word,
+      position: i,
+      isNegated: negationActive && !isStop,
+      isStopword: isStop,
+    });
+  }
+
+  const negatedTerms = tokens
+    .filter((t) => t.isNegated && !t.isStopword)
+    .map((t) => t.normalized);
+
+  const affirmedTerms = tokens
+    .filter((t) => !t.isNegated && !t.isStopword)
+    .map((t) => t.normalized);
+
+  return { tokens, negatedTerms, affirmedTerms, rawSentence: text };
+}
+
+
+export interface IndexEntry {
+  kodeGejala: string;
+  namaGejala: string;
+  term: string; // token yang menjadi kunci index
+}
+
+export type InvertedIndex = Map<string, IndexEntry[]>;
+
+const SYNONYM_GROUPS_FOR_INDEX: Array<{ canonical: string; variants: string[] }> = [
+  { canonical: "dingin",    variants: ["sejuk", "adem", "dingin"] },
+  { canonical: "berisik",   variants: ["bising", "ribut", "berdengung", "dengung", "berisik"] },
+  { canonical: "mati",      variants: ["padam", "off", "shutdown", "mati"] },
+  { canonical: "menetes",   variants: ["bocor", "tetes", "rembes", "menetes"] },
+  { canonical: "kipas",     variants: ["fan", "blower", "kipas"] },
+  { canonical: "indikator", variants: ["lampu", "led", "indikator"] },
+  { canonical: "kompresor", variants: ["compressor", "kompresor"] },
+  { canonical: "kondensor", variants: ["condenser", "kondensor"] },
+  { canonical: "evaporator",variants: ["evap", "evaporator"] },
+  { canonical: "gembung",   variants: ["bengkak", "gembung"] },
+  { canonical: "lemah",     variants: ["lemot", "pelan", "lemah"] },
+  { canonical: "tersumbat", variants: ["mampet", "sumbat", "tersumbat"] },
+  { canonical: "berkedip",  variants: ["blink", "kedip", "berkedip"] },
+];
+
+const SYNONYM_INDEX_MAP = new Map<string, string>();
+for (const group of SYNONYM_GROUPS_FOR_INDEX) {
+  for (const variant of group.variants) {
+    SYNONYM_INDEX_MAP.set(variant, group.canonical);
+  }
+}
+
+function stemForIndex(token: string): string {
+  const suffixes = ["nya", "lah", "kah", "pun", "ku", "mu", "kan", "an", "i"];
+  for (const suf of suffixes) {
+    if (token.length > 4 && token.endsWith(suf)) {
+      return token.slice(0, -suf.length);
+    }
+  }
+  return token;
+}
+
+function canonicalize(token: string): string {
+  const stemmed = stemForIndex(token);
+  return SYNONYM_INDEX_MAP.get(stemmed) ?? stemmed;
+}
+
+export function buildInvertedIndex(gejalaList: Gejala[]): InvertedIndex {
+  const index: InvertedIndex = new Map();
+
+  for (const gejala of gejalaList) {
+    const words = gejala.nama
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(" ")
+      .filter(Boolean);
+
+    for (const word of words) {
+      if (STOPWORDS_SET.has(word)) continue;
+      const term = canonicalize(word);
+      if (!term || term.length < 3) continue;
+
+      const entry: IndexEntry = {
+        kodeGejala: gejala.kode,
+        namaGejala: gejala.nama,
+        term,
+      };
+
+      if (!index.has(term)) {
+        index.set(term, []);
+      }
+      // hindari duplikat
+      const existing = index.get(term)!;
+      if (!existing.some((e) => e.kodeGejala === gejala.kode)) {
+        existing.push(entry);
+      }
+    }
+  }
+
+  return index;
+}
+
+export function queryIndex(
+  parseResult: ParseResult,
+  index: InvertedIndex
+): Map<string, number> {
+  const scores = new Map<string, number>(); // kodeGejala → skor
+
+  for (const term of parseResult.affirmedTerms) {
+    const canonical = canonicalize(term);
+    const entries = index.get(canonical) ?? [];
+    for (const entry of entries) {
+      scores.set(entry.kodeGejala, (scores.get(entry.kodeGejala) ?? 0) + 1);
+    }
+  }
+
+  return scores;
+}
+
+export const gejalaBobot: Record<string, number> = {
+  G3: 1.4,
+  G8: 1.4,
+  G5: 1.3,
+  G16: 1.3,
   G4: 1.1,
   G10: 1.1,
   G14: 1.1,
   G15: 1.1,
   G12: 1.0,
   G17: 1.0,
-  G6: 1.0,  
-
-  // Gejala menengah (gejala umum/performa)
-  G1: 0.9,  
-  G2: 0.8,  
-  G7: 0.8,  
-  G11: 0.8, 
-  G13: 0.8, 
-  G9: 0.8,  
+  G6: 1.0,
+  G1: 0.9,
+  G2: 0.8,
+  G7: 0.8,
+  G11: 0.8,
+  G13: 0.8,
+  G9: 0.8,
 };
 
 export const gejalaDaftar: Gejala[] = [
@@ -73,7 +254,7 @@ export const kerusakanDaftar: Kerusakan[] = [
     kode: "K1",
     nama: "Kompresor rusak",
     deskripsi:
-      "Kompresor adalah ‘jantung’ sistem pendingin. Jika rusak, AC biasanya tidak mampu mendinginkan dan dapat muncul suara tidak normal atau unit sering mati karena proteksi.",
+      "Kompresor adalah 'jantung' sistem pendingin. Jika rusak, AC biasanya tidak mampu mendinginkan dan dapat muncul suara tidak normal atau unit sering mati karena proteksi.",
     solusi:
       "Segera hubungi teknisi profesional untuk memeriksa dan mengganti kompresor AC. Kompresor adalah komponen vital dan penggantiannya harus dilakukan oleh ahli.",
   },
@@ -173,7 +354,7 @@ export const rules: Rule[] = [
   { kode: "A3",  kodeKerusakan: "K3",  kodeGejala: ["G1", "G8"] },
   { kode: "A4",  kodeKerusakan: "K4",  kodeGejala: ["G3", "G6"] },
   { kode: "A5",  kodeKerusakan: "K5",  kodeGejala: ["G5", "G10"] },
-  { kode: "A6",  kodeKerusakan: "K6",  kodeGejala: ["G1", "G10",] },
+  { kode: "A6",  kodeKerusakan: "K6",  kodeGejala: ["G1", "G10"] },
   { kode: "A7",  kodeKerusakan: "K7",  kodeGejala: ["G1", "G4"] },
   { kode: "A8",  kodeKerusakan: "K8",  kodeGejala: ["G9"] },
   { kode: "A9",  kodeKerusakan: "K9",  kodeGejala: ["G1", "G11", "G12"] },
@@ -181,6 +362,8 @@ export const rules: Rule[] = [
   { kode: "A11", kodeKerusakan: "K11", kodeGejala: ["G15"] },
   { kode: "A12", kodeKerusakan: "K12", kodeGejala: ["G1", "G16", "G17"] },
 ];
+
+export const invertedIndex: InvertedIndex = buildInvertedIndex(gejalaDaftar);
 
 export function forwardChaining(gejalaTerpilih: string[]): HasilDiagnosa[] {
   let bestFullMatch: HasilDiagnosa | null = null;
